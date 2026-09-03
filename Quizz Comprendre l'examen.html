@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="description"
+        content="Jeu de révision sur le fonctionnement de l'examen du CAP EPC"
+    >
+
+    <title>Défi CAP EPC</title>
+
+    <style>
+        :root {
+            --primary: #5b4bdb;
+            --primary-dark: #4335b9;
+            --secondary: #ffb703;
+            --success: #20a66a;
+            --danger: #dc3545;
+            --background: #f4f6fb;
+            --card: #ffffff;
+            --text: #23233a;
+            --muted: #6b7280;
+            --border: #e3e6ef;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            min-height: 100%;
+            background: var(--background);
+        }
+
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            padding: 16px;
+            padding-top: max(16px, env(safe-area-inset-top));
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, #ded9ff 0, transparent 35%),
+                radial-gradient(circle at bottom right, #ffe8aa 0, transparent 35%),
+                var(--background);
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button {
+            touch-action: manipulation;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .game-title {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+        }
+
+        .timer {
+            min-width: 112px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            color: white;
+            background: var(--text);
+            font-size: 1rem;
+            font-weight: 800;
+            text-align: center;
+            letter-spacing: 0.03em;
+            box-shadow: 0 6px 18px rgba(35, 35, 58, 0.18);
+        }
+
+        .timer.running {
+            background: var(--primary);
+        }
+
+        .card {
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 18px 50px rgba(45, 42, 90, 0.12);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .hero-icon {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 3.5rem;
+            text-align: center;
+        }
+
+        h1,
+        h2,
+        h3 {
+            line-height: 1.25;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            color: var(--primary-dark);
+            font-size: clamp(1.8rem, 7vw, 2.8rem);
+            text-align: center;
+        }
+
+        .subtitle {
+            margin: 0 0 24px;
+            color: var(--muted);
+            line-height: 1.55;
+            text-align: center;
+        }
+
+        .rules {
+            margin: 20px 0;
+            padding: 18px;
+            border-left: 5px solid var(--secondary);
+            border-radius: 14px;
+            background: #fff8df;
+        }
+
+        .rules h2 {
+            margin: 0 0 10px;
+            font-size: 1.05rem;
+        }
+
+        .rules ul {
+            margin: 0;
+            padding-left: 22px;
+            line-height: 1.55;
+        }
+
+        .field-label {
+            display: block;
+            margin: 18px 0 8px;
+            font-weight: 700;
+        }
+
+        .name-input {
+            width: 100%;
+            min-height: 54px;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            outline: none;
+            background: white;
+            color: var(--text);
+        }
+
+        .name-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(91, 75, 219, 0.12);
+        }
+
+        .main-button,
+        .secondary-button {
+            width: 100%;
+            min-height: 54px;
+            margin-top: 16px;
+            padding: 14px 18px;
+            border: 0;
+            border-radius: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .main-button {
+            color: white;
+            background: linear-gradient(135deg, var(--primary), #7968f2);
+            box-shadow: 0 10px 22px rgba(91, 75, 219, 0.25);
+        }
+
+        .main-button:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        }
+
+        .main-button:active,
+        .secondary-button:active,
+        .answer-button:active {
+            transform: scale(0.985);
+        }
+
+        .secondary-button {
+            color: var(--primary-dark);
+            background: #ebe8ff;
+        }
+
+        .progress-wrapper {
+            margin-bottom: 18px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .progress-track {
+            height: 12px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e9eaf1;
+        }
+
+        .progress-bar {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--secondary), #ffcb45);
+            transition: width 0.25s ease;
+        }
+
+        .round-badge {
+            display: inline-block;
+            margin-bottom: 12px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            color: var(--primary-dark);
+            background: #ebe8ff;
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .round-badge.retry {
+            color: #8a4b00;
+            background: #fff0ce;
+        }
+
+        .question-text {
+            margin: 0 0 20px;
+            font-size: clamp(1.2rem, 4.8vw, 1.55rem);
+        }
+
+        .instruction {
+            margin: -10px 0 18px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .answers {
+            display: grid;
+            gap: 12px;
+        }
+
+        .answer-button {
+            width: 100%;
+            min-height: 58px;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            color: var(--text);
+            background: white;
+            font-weight: 700;
+            line-height: 1.35;
+            text-align: left;
+            cursor: pointer;
+            transition:
+                transform 0.12s ease,
+                border-color 0.15s ease,
+                background 0.15s ease;
+        }
+
+        .answer-button:hover {
+            border-color: var(--primary);
+            background: #f7f5ff;
+        }
+
+        .answer-button.selected {
+            border-color: var(--primary);
+            background: #ebe8ff;
+        }
+
+        .answer-button.correct {
+            border-color: var(--success);
+            color: #075f3a;
+            background: #dff8ec;
+        }
+
+        .answer-button.wrong {
+            border-color: var(--danger);
+            color: #8b1722;
+            background: #ffe5e8;
+        }
+
+        .answer-button:disabled {
+            cursor: default;
+        }
+
+        .validation-button {
+            margin-top: 15px;
+        }
+
+        .feedback {
+            min-height: 28px;
+            margin-top: 14px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .feedback.good {
+            color: var(--success);
+        }
+
+        .feedback.bad {
+            color: var(--danger);
+        }
+
+        .result-title {
+            text-align: center;
+        }
+
+        .trophy {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 4rem;
+            text-align: center;
+        }
+
+        .result-name {
+            margin: 0 0 18px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .result-box {
+            padding: 15px 8px;
+            border-radius: 16px;
+            background: #f4f2ff;
+            text-align: center;
+        }
+
+        .result-value {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--primary-dark);
+            font-size: 1.35rem;
+            font-weight: 900;
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .leaderboard {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .leaderboard h3 {
+            margin-top: 0;
+        }
+
+        .ranking-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .ranking-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ranking-position {
+            font-size: 1.1rem;
+            font-weight: 900;
+            text-align: center;
+        }
+
+        .ranking-name {
+            overflow: hidden;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ranking-time {
+            color: var(--primary-dark);
+            font-weight: 900;
+        }
+
+        .small-note {
+            color: var(--muted);
+            font-size: 0.8rem;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .card {
+                padding: 19px 15px;
+                border-radius: 20px;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .result-box {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 13px 15px;
+            }
+
+            .result-value {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<main class="app">
+
+    <header class="top-bar">
+        <h2 class="game-title">🎓 Défi CAP EPC</h2>
+        <div id="timer" class="timer" aria-live="polite">00:00.0</div>
+    </header>
+
+    <!-- ÉCRAN D'ACCUEIL -->
+    <section id="startScreen" class="card">
+
+        <span class="hero-icon">⚡</span>
+
+        <h1>Défi CAP EPC</h1>
+
+        <p class="subtitle">
+            Réponds correctement aux 10 questions sur le fonctionnement
+            de ton examen. Sois précis… et surtout rapide !
+        </p>
+
+        <div class="rules">
+            <h2>🎯 Règles du jeu</h2>
+
+            <ul>
+                <li>Le chronomètre démarre au lancement de la partie.</li>
+                <li>Tu dois répondre aux 10 questions.</li>
+                <li>Les questions ratées reviendront ensuite.</li>
+                <li>Le chronomètre s’arrête quand tout est correct.</li>
+                <li>L’élève le plus rapide remporte le défi.</li>
+            </ul>
+        </div>
+
+        <label class="field-label" for="playerName">
+            Ton prénom ou ton pseudonyme
+        </label>
+
+        <input
+            id="playerName"
+            class="name-input"
+            type="text"
+            maxlength="25"
+            placeholder="Exemple : Camille"
+            autocomplete="off"
+        >
+
+        <button id="startButton" class="main-button" type="button">
+            🚀 Commencer le défi
+        </button>
+
+        <p class="small-note">
+            Les réponses sont mélangées à chaque partie.
+        </p>
+
+    </section>
+
+    <!-- ÉCRAN DU JEU -->
+    <section id="gameScreen" class="card hidden">
+
+        <div class="progress-wrapper">
+            <div class="progress-info">
+                <span id="progressText">Question 1 sur 10</span>
+                <span id="errorCounter">0 erreur</span>
+            </div>
+
+            <div class="progress-track">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+        </div>
+
+        <div id="roundBadge" class="round-badge">
+            Premier passage
+        </div>
+
+        <h2 id="questionText" class="question-text"></h2>
+
+        <p id="questionInstruction" class="instruction"></p>
+
+        <div id="answersContainer" class="answers"></div>
+
+        <button
+            id="validateButton"
+            class="main-button validation-button hidden"
+            type="button"
+        >
+            Valider ma réponse
+        </button>
+
+        <div id="feedback" class="feedback" aria-live="polite"></div>
+
+    </section>
+
+    <!-- ÉCRAN DE RÉSULTAT -->
+    <section id="resultScreen" class="card hidden">
+
+        <span class="trophy">🏆</span>
+
+        <h1 class="result-title">Défi terminé !</h1>
+
+        <p id="resultName" class="result-name"></p>
+
+        <div class="result-grid">
+
+            <div class="result-box">
+                <span id="finalTime" class="result-value">00:00.0</span>
+                <span class="result-label">Temps final</span>
+            </div>
+
+            <div class="result-box">
+                <span id="firstScore" class="result-value">0 / 10</span>
+                <span class="result-label">Premier passage</span>
+            </div>
+
+            <div class="result-box">
+                <span id="finalErrors" class="result-value">0</span>
+                <span class="result-label">Erreurs totales</span>
+            </div>
+
+        </div>
+
+        <div class="leaderboard">
+            <h3>🥇 Meilleurs temps sur cet appareil</h3>
+            <ol id="rankingList" class="ranking-list"></ol>
+        </div>
+
+        <button id="restartButton" class="main-button" type="button">
+            🔄 Rejouer
+        </button>
+
+        <button id="clearRankingButton" class="secondary-button" type="button">
+            Effacer le classement de l’appareil
+        </button>
+
+        <p class="small-note">
+            Ce classement est enregistré uniquement sur cet appareil.
+        </p>
+
+    </section>
+
+</main>
+
+<script>
+    /*
+    ==========================================================
+    QUESTIONS DU JEU
+    ==========================================================
+    Pour modifier une question :
+    - question : texte de la question
+    - answers : réponses proposées
+    - correct : index de la bonne réponse (0 = première réponse)
+    - multiple : true si plusieurs réponses sont attendues
+    - correctAnswers : index des bonnes réponses multiples
+    */
+
+    const questions = [
+        {
+            question: "Combien d’épreuves professionnelles comporte le CAP EPC ?",
+            answers: [
+                "2 épreuves professionnelles",
+                "3 épreuves professionnelles",
+                "4 épreuves professionnelles",
+                "5 épreuves professionnelles"
+            ],
+            correct: 1
+        },
+        {
+            question: "Où les épreuves professionnelles se déroulent-elles principalement ?",
+            answers: [
+                "Uniquement au centre de formation",
+                "À domicile",
+                "En entreprise",
+                "À la mairie"
+            ],
+            correct: 2
+        },
+        {
+            question: "Que doit montrer le candidat pendant l’épreuve EP1 ?",
+            answers: [
+                "Qu’il sait réceptionner les marchandises et suivre les commandes",
+                "Qu’il sait créer un site Internet",
+                "Qu’il sait organiser un entretien d’embauche",
+                "Qu’il sait réaliser une publicité télévisée"
+            ],
+            correct: 0
+        },
+        {
+            question: "Comment se déroule l’épreuve EP1 ?",
+            answers: [
+                "Un écrit de 2 heures",
+                "Un oral de 20 minutes à partir du portfolio",
+                "Un stage d’une journée",
+                "Un questionnaire de 30 minutes"
+            ],
+            correct: 1
+        },
+        {
+            question: "Quelles activités sont évaluées pendant l’épreuve EP2 ?",
+            answers: [
+                "La comptabilité de l’entreprise",
+                "L’approvisionnement et la mise en valeur des produits",
+                "La création d’un CV",
+                "La gestion des salaires"
+            ],
+            correct: 1
+        },
+        {
+            question: "Combien de fiches d’activités le portfolio doit-il contenir ?",
+            answers: [
+                "4 fiches : 2 pour EP1 et 2 pour EP2",
+                "6 fiches : 3 pour EP1 et 3 pour EP2",
+                "8 fiches : 4 pour EP1 et 4 pour EP2",
+                "10 fiches : 5 pour EP1 et 5 pour EP2"
+            ],
+            correct: 2
+        },
+        {
+            question: "Quels éléments doivent apparaître dans une fiche d’activité ?",
+            instruction: "Plusieurs réponses sont attendues.",
+            answers: [
+                "Le contexte et l’activité réalisée",
+                "Les compétences mobilisées",
+                "Des photos ou des vidéos servant de preuves",
+                "Une analyse de ce qui a été appris ou amélioré",
+                "Les loisirs préférés du candidat"
+            ],
+            multiple: true,
+            correctAnswers: [0, 1, 2, 3]
+        },
+        {
+            question: "Que se passe-t-il si le candidat se présente à EP1 ou EP2 sans portfolio ?",
+            answers: [
+                "Il reçoit automatiquement la moyenne",
+                "Il peut revenir le lendemain",
+                "Il n’est pas interrogé et obtient zéro",
+                "Il passe uniquement une épreuve écrite"
+            ],
+            correct: 2
+        },
+        {
+            question: "Quelle proposition décrit correctement l’épreuve EP3 ?",
+            answers: [
+                "Elle dure 35 minutes maximum et évalue l’accueil, le conseil et l’accompagnement du client",
+                "Elle dure 2 heures et porte uniquement sur les mathématiques",
+                "Elle consiste uniquement à présenter le portfolio d’EP1",
+                "Elle se déroule uniquement par écrit"
+            ],
+            correct: 0
+        },
+        {
+            question: "Comment se déroule l’oral du chef-d’œuvre ?",
+            answers: [
+                "20 minutes de présentation sans questions",
+                "10 minutes : 5 minutes de présentation et 5 minutes d’échange",
+                "30 minutes d’épreuve écrite",
+                "5 minutes de présentation uniquement"
+            ],
+            correct: 1
+        }
+    ];
+
+    /*
+    ==========================================================
+    ÉLÉMENTS DE LA PAGE
+    ==========================================================
+    */
+
+    const startScreen = document.getElementById("startScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const resultScreen = document.getElementById("resultScreen");
+
+    const playerNameInput = document.getElementById("playerName");
+    const startButton = document.getElementById("startButton");
+    const restartButton = document.getElementById("restartButton");
+    const clearRankingButton = document.getElementById("clearRankingButton");
+
+    const timerElement = document.getElementById("timer");
+    const progressText = document.getElementById("progressText");
+    const progressBar = document.getElementById("progressBar");
+    const errorCounter = document.getElementById("errorCounter");
+    const roundBadge = document.getElementById("roundBadge");
+
+    const questionText = document.getElementById("questionText");
+    const questionInstruction = document.getElementById("questionInstruction");
+    const answersContainer = document.getElementById("answersContainer");
+    const validateButton = document.getElementById("validateButton");
+    const feedback = document.getElementById("feedback");
+
+    const resultName = document.getElementById("resultName");
+    const finalTime = document.getElementById("finalTime");
+    const firstScore = document.getElementById("firstScore");
+    const finalErrors = document.getElementById("finalErrors");
+    const rankingList = document.getElementById("rankingList");
+
+    /*
+    ==========================================================
+    VARIABLES DU JEU
+    ==========================================================
+    */
+
+    let playerName = "";
+    let currentQueue = [];
+    let retryQueue = [];
+    let currentPosition = 0;
+    let currentQuestion = null;
+
+    let firstRound = true;
+    let firstRoundCorrect = 0;
+    let totalErrors = 0;
+
+    let selectedAnswers = [];
+    let displayedAnswers = [];
+    let answerLocked = false;
+
+    let startTime = 0;
+    let elapsedTime = 0;
+    let timerInterval = null;
+
+    /*
+    ==========================================================
+    FONCTIONS UTILITAIRES
+    ==========================================================
+    */
+
+    function shuffleArray(array) {
+        const copy = [...array];
+
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+
+        return copy;
+    }
+
+    function formatTime(milliseconds) {
+        const totalTenths = Math.floor(milliseconds / 100);
+        const minutes = Math.floor(totalTenths / 600);
+        const seconds = Math.floor((totalTenths % 600) / 10);
+        const tenths = totalTenths % 10;
+
+        return (
+            String(minutes).padStart(2, "0") +
+            ":" +
+            String(seconds).padStart(2, "0") +
+            "." +
+            tenths
+        );
+    }
+
+    function showScreen(screenToShow) {
+        startScreen.classList.add("hidden");
+        gameScreen.classList.add("hidden");
+        resultScreen.classList.add("hidden");
+
+        screenToShow.classList.remove("hidden");
+    }
+
+    function updateTimer() {
+        elapsedTime = performance.now() - startTime;
+        timerElement.textContent = formatTime(elapsedTime);
+    }
+
+    function startTimer() {
+        startTime = performance.now();
+        elapsedTime = 0;
+
+        timerElement.textContent = "00:00.0";
+        timerElement.classList.add("running");
+
+        timerInterval = setInterval(updateTimer, 100);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        updateTimer();
+        timerElement.classList.remove("running");
+    }
+
+    function normalizeIndexes(indexes) {
+        return [...indexes].sort((a, b) => a - b);
+    }
+
+    function arraysAreEqual(firstArray, secondArray) {
+        const first = normalizeIndexes(firstArray);
+        const second = normalizeIndexes(secondArray);
+
+        return (
+            first.length === second.length &&
+            first.every((value, index) => value === second[index])
+        );
+    }
+
+    /*
+    ==========================================================
+    DÉMARRAGE DU JEU
+    ==========================================================
+    */
+
+    function startGame() {
+        playerName = playerNameInput.value.trim();
+
+        if (!playerName) {
+            playerNameInput.focus();
+            playerNameInput.style.borderColor = "var(--danger)";
+            return;
+        }
+
+        playerNameInput.style.borderColor = "";
+
+        /*
+        L’ordre des questions reste identique pour tous les élèves,
+        afin que la comparaison des temps soit plus équitable.
+        */
+        currentQueue = questions.map((question, index) => ({
+            ...question,
+            originalIndex: index
+        }));
+
+        retryQueue = [];
+        currentPosition = 0;
+
+        firstRound = true;
+        firstRoundCorrect = 0;
+        totalErrors = 0;
+
+        showScreen(gameScreen);
+        startTimer();
+        displayQuestion();
+    }
+
+    /*
+    ==========================================================
+    AFFICHAGE DES QUESTIONS
+    ==========================================================
+    */
+
+    function displayQuestion() {
+        answerLocked = false;
+        selectedAnswers = [];
+        feedback.textContent = "";
+        feedback.className = "feedback";
+        validateButton.classList.add("hidden");
+
+        currentQuestion = currentQueue[currentPosition];
+
+        questionText.textContent = currentQuestion.question;
+
+        questionInstruction.textContent =
+            currentQuestion.instruction ||
+            (currentQuestion.multiple
+                ? "Plusieurs réponses sont attendues."
+                : "Choisis une seule réponse.");
+
+        if (firstRound) {
+            roundBadge.textContent = "Premier passage";
+            roundBadge.classList.remove("retry");
+
+            progressText.textContent =
+                `Question ${currentPosition + 1} sur ${questions.length}`;
+
+            const percentage =
+                ((currentPosition + 1) / questions.length) * 100;
+
+            progressBar.style.width = percentage + "%";
+        } else {
+            roundBadge.textContent = "Question à revoir";
+            roundBadge.classList.add("retry");
+
+            progressText.textContent =
+                `Révision ${currentPosition + 1} sur ${currentQueue.length}`;
+
+            const percentage =
+                ((currentPosition + 1) / currentQueue.length) * 100;
+
+            progressBar.style.width = percentage + "%";
+        }
+
+        errorCounter.textContent =
+            totalErrors + (totalErrors > 1 ? " erreurs" : " erreur");
+
+        /*
+        Transformation des réponses afin de conserver leur index original
+        même après leur mélange.
+        */
+        displayedAnswers = currentQuestion.answers.map((text, index) => ({
+            text,
+            originalIndex: index
+        }));
+
+        displayedAnswers = shuffleArray(displayedAnswers);
+
+        answersContainer.innerHTML = "";
+
+        displayedAnswers.forEach((answer, displayedIndex) => {
+            const button = document.createElement("button");
+
+            button.type = "button";
+            button.className = "answer-button";
+            button.textContent = answer.text;
+            button.dataset.displayedIndex = displayedIndex;
+            button.dataset.originalIndex = answer.originalIndex;
+
+            button.addEventListener("click", () => {
+                selectAnswer(button, answer.originalIndex);
+            });
+
+            answersContainer.appendChild(button);
+        });
+    }
+
+    /*
+    ==========================================================
+    SÉLECTION ET VALIDATION
+    ==========================================================
+    */
+
+    function selectAnswer(button, originalIndex) {
+        if (answerLocked) {
+            return;
+        }
+
+        if (currentQuestion.multiple) {
+            const existingPosition =
+                selectedAnswers.indexOf(originalIndex);
+
+            if (existingPosition >= 0) {
+                selectedAnswers.splice(existingPosition, 1);
+                button.classList.remove("selected");
+            } else {
+                selectedAnswers.push(originalIndex);
+                button.classList.add("selected");
+            }
+
+            if (selectedAnswers.length > 0) {
+                validateButton.classList.remove("hidden");
+            } else {
+                validateButton.classList.add("hidden");
+            }
+        } else {
+            selectedAnswers = [originalIndex];
+
+            document
+                .querySelectorAll(".answer-button")
+                .forEach(answerButton => {
+                    answerButton.classList.remove("selected");
+                });
+
+            button.classList.add("selected");
+
+            /*
+            Une question à choix unique est validée immédiatement,
+            pour conserver le rythme rapide du jeu.
+            */
+            validateCurrentAnswer();
+        }
+    }
+
+    validateButton.addEventListener("click", validateCurrentAnswer);
+
+    function validateCurrentAnswer() {
+        if (answerLocked || selectedAnswers.length === 0) {
+            return;
+        }
+
+        answerLocked = true;
+        validateButton.classList.add("hidden");
+
+        let isCorrect = false;
+
+        if (currentQuestion.multiple) {
+            isCorrect = arraysAreEqual(
+                selectedAnswers,
+                currentQuestion.correctAnswers
+            );
+        } else {
+            isCorrect =
+                selectedAnswers[0] === currentQuestion.correct;
+        }
+
+        showAnswerFeedback(isCorrect);
+
+        if (isCorrect) {
+            if (firstRound) {
+                firstRoundCorrect++;
+            }
+
+            feedback.textContent = "✅ Bonne réponse !";
+            feedback.className = "feedback good";
+        } else {
+            totalErrors++;
+
+            /*
+            La question est ajoutée à la prochaine série de révision.
+            Elle pourra donc revenir plusieurs fois tant qu’elle
+            n’est pas maîtrisée.
+            */
+            retryQueue.push(currentQuestion);
+
+            feedback.textContent = "❌ Mauvaise réponse : elle reviendra.";
+            feedback.className = "feedback bad";
+
+            errorCounter.textContent =
+                totalErrors + (totalErrors > 1 ? " erreurs" : " erreur");
+        }
+
+        setTimeout(goToNextQuestion, isCorrect ? 650 : 1100);
+    }
+
+    function showAnswerFeedback(isCorrect) {
+        const buttons = document.querySelectorAll(".answer-button");
+
+        buttons.forEach(button => {
+            button.disabled = true;
+
+            const originalIndex = Number(button.dataset.originalIndex);
+
+            let answerIsCorrect;
+
+            if (currentQuestion.multiple) {
+                answerIsCorrect =
+                    currentQuestion.correctAnswers.includes(originalIndex);
+            } else {
+                answerIsCorrect =
+                    originalIndex === currentQuestion.correct;
+            }
+
+            if (answerIsCorrect) {
+                button.classList.add("correct");
+            } else if (selectedAnswers.includes(originalIndex)) {
+                button.classList.add("wrong");
+            }
+        });
+    }
+
+    /*
+    ==========================================================
+    PASSAGE À LA QUESTION SUIVANTE
+    ==========================================================
+    */
+
+    function goToNextQuestion() {
+        currentPosition++;
+
+        if (currentPosition < currentQueue.length) {
+            displayQuestion();
+            return;
+        }
+
+        /*
+        Fin de la série en cours.
+        S’il reste des erreurs, on crée une nouvelle série.
+        */
+        if (retryQueue.length > 0) {
+            firstRound = false;
+
+            /*
+            On supprime les éventuels doublons afin qu'une question
+            ne soit posée qu'une fois par série de révision.
+            */
+            const uniqueQuestions = [];
+
+            retryQueue.forEach(question => {
+                const alreadyAdded = uniqueQuestions.some(
+                    item => item.originalIndex === question.originalIndex
+                );
+
+                if (!alreadyAdded) {
+                    uniqueQuestions.push(question);
+                }
+            });
+
+            currentQueue = uniqueQuestions;
+            retryQueue = [];
+            currentPosition = 0;
+
+            displayQuestion();
+        } else {
+            finishGame();
+        }
+    }
+
+    /*
+    ==========================================================
+    FIN DE PARTIE ET CLASSEMENT
+    ==========================================================
+    */
+
+    function finishGame() {
+        stopTimer();
+
+        resultName.textContent =
+            `Bravo ${playerName}, tu as répondu correctement à toutes les questions.`;
+
+        finalTime.textContent = formatTime(elapsedTime);
+        firstScore.textContent =
+            `${firstRoundCorrect} / ${questions.length}`;
+        finalErrors.textContent = totalErrors;
+
+        saveResult({
+            name: playerName,
+            time: Math.round(elapsedTime),
+            errors: totalErrors,
+            firstScore: firstRoundCorrect,
+            date: new Date().toISOString()
+        });
+
+        displayRanking();
+        showScreen(resultScreen);
+    }
+
+    function getRanking() {
+        try {
+            const savedRanking =
+                localStorage.getItem("capEpcRanking");
+
+            return savedRanking ? JSON.parse(savedRanking) : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function saveResult(result) {
+        const ranking = getRanking();
+
+        ranking.push(result);
+
+        /*
+        Classement principal par temps.
+        En cas d’égalité, le nombre d’erreurs départage les joueurs.
+        */
+        ranking.sort((a, b) => {
+            if (a.time !== b.time) {
+                return a.time - b.time;
+            }
+
+            return a.errors - b.errors;
+        });
+
+        const topResults = ranking.slice(0, 10);
+
+        try {
+            localStorage.setItem(
+                "capEpcRanking",
+                JSON.stringify(topResults)
+            );
+        } catch (error) {
+            console.warn("Impossible d’enregistrer le classement.");
+        }
+    }
+
+    function displayRanking() {
+        const ranking = getRanking();
+        rankingList.innerHTML = "";
+
+        if (ranking.length === 0) {
+            const emptyItem = document.createElement("li");
+            emptyItem.textContent = "Aucun résultat enregistré.";
+            rankingList.appendChild(emptyItem);
+            return;
+        }
+
+        ranking.forEach((result, index) => {
+            const item = document.createElement("li");
+            item.className = "ranking-item";
+
+            const position = document.createElement("span");
+            position.className = "ranking-position";
+
+            if (index === 0) {
+                position.textContent = "🥇";
+            } else if (index === 1) {
+                position.textContent = "🥈";
+            } else if (index === 2) {
+                position.textContent = "🥉";
+            } else {
+                position.textContent = index + 1;
+            }
+
+            const name = document.createElement("span");
+            name.className = "ranking-name";
+            name.textContent = result.name;
+
+            const time = document.createElement("span");
+            time.className = "ranking-time";
+            time.textContent = formatTime(result.time);
+
+            item.appendChild(position);
+            item.appendChild(name);
+            item.appendChild(time);
+
+            rankingList.appendChild(item);
+        });
+    }
+
+    /*
+    ==========================================================
+    BOUTONS ET ÉVÉNEMENTS
+    ==========================================================
+    */
+
+    startButton.addEventListener("click", startGame);
+
+    playerNameInput.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            startGame();
+        }
+    });
+
+    restartButton.addEventListener("click", () => {
+        clearInterval(timerInterval);
+
+        timerElement.textContent = "00:00.0";
+        playerNameInput.value = playerName;
+
+        showScreen(startScreen);
+    });
+
+    clearRankingButton.addEventListener("click", () => {
+        const confirmation = confirm(
+            "Voulez-vous vraiment effacer le classement enregistré sur cet appareil ?"
+        );
+
+        if (confirmation) {
+            localStorage.removeItem("capEpcRanking");
+            displayRanking();
+        }
+    });
+</script>
+
+</body>
+</html>
