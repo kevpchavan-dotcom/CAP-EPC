@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mot Mystère</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+    background: linear-gradient(135deg, #fdf6e3, #cbe9f7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    color: #2c5f7c;
+    font-size: 2.2em;
+    text-shadow: 2px 2px 0 #fff;
+    margin-bottom: 5px;
+  }
+
+  .subtitle {
+    color: #4a4a4a;
+    margin-bottom: 25px;
+    font-size: 1.1em;
+  }
+
+  .card {
+    background: #ffffff;
+    border: 6px solid #ffb703;
+    border-radius: 25px;
+    padding: 30px 50px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+  }
+
+  .level-label {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 20px;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+  }
+
+  .level-1 { background: #43aa8b; }
+  .level-2 { background: #f9844a; }
+  .level-3 { background: #ef476f; }
+
+  #word {
+    font-size: 2.8em;
+    font-weight: bold;
+    color: #023047;
+    min-height: 1.4em;
+    margin: 20px 0;
+    letter-spacing: 2px;
+    word-break: break-word;
+  }
+
+  .placeholder {
+    color: #aaa;
+    font-size: 0.5em;
+    font-weight: normal;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: 1.1em;
+    padding: 14px 30px;
+    margin: 8px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+  }
+
+  button:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  }
+
+  #drawBtn {
+    background: #219ebc;
+    color: white;
+  }
+  #drawBtn:hover { background: #1a7f99; }
+
+  .nav-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .nav-buttons button {
+    background: #e0e0e0;
+    color: #333;
+  }
+
+  .nav-buttons button.active {
+    color: white;
+  }
+
+  .nav-buttons button.active.l1 { background: #43aa8b; }
+  .nav-buttons button.active.l2 { background: #f9844a; }
+  .nav-buttons button.active.l3 { background: #ef476f; }
+
+  .used-count {
+    margin-top: 15px;
+    color: #666;
+    font-size: 0.9em;
+  }
+
+  .stars {
+    font-size: 1.5em;
+    margin-top: 5px;
+  }
+
+  footer {
+    margin-top: 25px;
+    color: #556;
+    font-size: 0.85em;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎓 Le Mot Mystère</h1>
+<p class="subtitle">Clique sur un niveau, puis pioche un mot !</p>
+
+<div class="card">
+  <div id="levelLabel" class="level-label level-1">NIVEAU 1</div>
+
+  <div id="word"><span class="placeholder">Appuie sur "Piocher un mot"</span></div>
+
+  <button id="drawBtn">🎲 Piocher un mot</button>
+
+  <div class="nav-buttons">
+    <button id="btn1" class="active l1" onclick="setLevel(1)">Niveau 1</button>
+    <button id="btn2" onclick="setLevel(2)">Niveau 2</button>
+    <button id="btn3" onclick="setLevel(3)">Niveau 3</button>
+  </div>
+
+  <div class="used-count" id="usedCount"></div>
+</div>
+
+<footer>CAP EPC — Jeu du mot mystère</footer>
+
+<script>
+  const words = {
+    1: ["PAIN", "CAISSE", "FOUR", "CLIENT", "TABLIER", "STOCK", "PANIER", "PRIX", "SOURIRE", "ACCUEIL"],
+    2: ["INVENTAIRE", "LIVRAISON", "HYGIENE", "RAYONNAGE", "ETIQUETTE", "COMPTOIR", "REASSORT", "VITRINE", "CAISSIER", "FRAICHEUR"],
+    3: ["TRACABILITE", "MERCHANDISING", "PROMOTION", "FIDELISATION", "RECLAMATION", "APPROVISIONNEMENT", "CONDITIONNEMENT", "POLYVALENCE", "SATISFACTION", "ARGUMENTAIRE"]
+  };
+
+  let currentLevel = 1;
+  let usedWords = { 1: [], 2: [], 3: [] };
+
+  const wordEl = document.getElementById('word');
+  const levelLabel = document.getElementById('levelLabel');
+  const usedCountEl = document.getElementById('usedCount');
+  const drawBtn = document.getElementById('drawBtn');
+
+  function setLevel(level) {
+    currentLevel = level;
+
+    document.querySelectorAll('.nav-buttons button').forEach(b => b.classList.remove('active', 'l1', 'l2', 'l3'));
+    const btn = document.getElementById('btn' + level);
+    btn.classList.add('active', 'l' + level);
+
+    levelLabel.className = 'level-label level-' + level;
+    levelLabel.textContent = 'NIVEAU ' + level;
+
+    wordEl.innerHTML = '<span class="placeholder">Appuie sur "Piocher un mot"</span>';
+    updateUsedCount();
+  }
+
+  function updateUsedCount() {
+    const total = words[currentLevel].length;
+    const used = usedWords[currentLevel].length;
+    usedCountEl.textContent = `Mots tirés : ${used} / ${total}`;
+    if (used >= total) {
+      usedCountEl.textContent += " — Tous les mots sont passés, ça recommence !";
+    }
+  }
+
+  drawBtn.addEventListener('click', () => {
+    const list = words[currentLevel];
+
+    if (usedWords[currentLevel].length >= list.length) {
+      usedWords[currentLevel] = [];
+    }
+
+    const remaining = list.filter(w => !usedWords[currentLevel].includes(w));
+    const chosen = remaining[Math.floor(Math.random() * remaining.length)];
+    usedWords[currentLevel].push(chosen);
+
+    wordEl.textContent = chosen;
+    updateUsedCount();
+  });
+
+  updateUsedCount();
+</script>
+
+</body>
+</html>
