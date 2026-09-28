@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PIXELS – Gestion de la réserve</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Verdana,Arial,sans-serif;font-size:18px;background:#1e1b3a;color:#222;line-height:1.4}
+  header{background:#2d2560;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{font-family:"Courier New",monospace;font-weight:bold;font-size:30px;letter-spacing:4px;color:#7df9ff;text-shadow:3px 3px 0 #ff3fa4}
+  nav{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  nav button{background:#463d8a;color:#fff;border:2px solid #7d73d6;border-radius:8px;padding:8px 12px;font-size:16px;cursor:pointer}
+  nav button.actif{background:#ffd23f;color:#222;border-color:#ffd23f;font-weight:bold}
+  nav button:disabled{opacity:.4;cursor:not-allowed}
+  main{max-width:1100px;margin:16px auto;background:#fff;border-radius:14px;padding:20px}
+  h1{margin-top:0;font-size:28px}
+  .gros{font-size:24px;font-weight:bold;background:#fff4c2;border:3px solid #ffd23f;border-radius:10px;padding:16px;text-align:center}
+  .btn{background:#2d8a4e;color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:20px;cursor:pointer;margin:8px 4px}
+  .btn.bleu{background:#2f5fb3}.btn.gris{background:#666}.btn.rouge{background:#b33030}
+  .btn:focus,nav button:focus,.case:focus,input:focus{outline:4px solid #ff3fa4;outline-offset:2px}
+  .etapes{font-size:20px}.etapes li{margin:6px 0}
+  .bandeau{background:#b33030;color:#fff;font-weight:bold;padding:14px;text-align:center;font-size:18px}
+  /* Réserve */
+  .reserve{background:#8a8f99;border-radius:10px;padding:14px}
+  .etagere{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:10px 10px 0;background:#5b3d23;border-radius:6px;margin-bottom:14px;border-bottom:14px solid #3e2915}
+  .case{background:#2b1c10;border:none;border-radius:4px 4px 0 0;min-height:130px;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:4px;position:relative;color:#fff;font-size:14px}
+  .case .porte{flex:1;width:100%;display:flex;align-items:center;justify-content:center;font-size:40px;color:#ffd23f;background:repeating-linear-gradient(45deg,#b08050 0 10px,#a07040 10px 20px);border-radius:3px;pointer-events:none}
+  .case.vu .porte{background:#2b1c10}
+  .case .coche{position:absolute;top:4px;right:6px;background:#2d8a4e;border-radius:50%;width:26px;height:26px;display:none;align-items:center;justify-content:center;font-size:16px;pointer-events:none}
+  .case.vu .coche{display:flex}
+  .etiq{background:#fffbe6;color:#222;width:100%;border:2px solid #222;border-radius:3px;margin-top:4px;padding:2px;text-align:center;font-size:12px;pointer-events:none}
+  .etiq b{display:block;font-size:16px;color:#b33030}
+  .detail{border:4px solid #2f5fb3;border-radius:12px;padding:14px;margin-top:10px;background:#eef3ff}
+  .pile{display:flex;flex-wrap:wrap;gap:4px;min-height:60px;align-items:flex-end;background:#5b3d23;padding:8px;border-radius:6px;border-bottom:10px solid #3e2915}
+  .boite{width:26px;height:36px;border-radius:3px;border:2px solid #222;position:relative}
+  .boite::after{content:"";position:absolute;left:3px;right:3px;top:5px;height:12px;background:rgba(255,255,255,.7);border-radius:2px}
+  .vide{color:#fff;font-size:22px;font-weight:bold;width:100%;text-align:center;padding:14px}
+  .qte{font-size:30px;font-weight:bold;color:#2f5fb3}
+  /* Tableaux */
+  table{border-collapse:collapse;width:100%;margin:10px 0}
+  th,td{border:2px solid #999;padding:8px;text-align:left}
+  th{background:#2d2560;color:#fff}
+  tr:nth-child(even) td{background:#f4f4fb}
+  .ref{font-family:"Courier New",monospace;font-weight:bold;color:#b33030;font-size:18px}
+  input[type=text]{width:100px;font-size:22px;padding:6px;border:3px solid #888;border-radius:8px;text-align:center}
+  input.err{border-color:#b33030;background:#ffe3e3}
+  .msg{color:#b33030;font-weight:bold;font-size:15px;display:block}
+  .obj{font-weight:bold;font-size:22px}
+  .obj80{color:#fff;background:#b33030;padding:2px 10px;border-radius:8px}
+  .alerte{background:#ffe3e3;border:3px solid #b33030;border-radius:10px;padding:10px;font-weight:bold;display:none}
+  .ok{color:#1d6b38;font-weight:bold}.ko{color:#b33030;font-weight:bold}
+  .score{display:flex;gap:14px;flex-wrap:wrap}
+  .score div{flex:1;min-width:220px;background:#eef3ff;border-radius:10px;padding:12px;font-size:20px;text-align:center}
+  .cache{display:none!important}
+  .aide{background:#e8f7ec;border-left:6px solid #2d8a4e;padding:8px 12px;margin:10px 0}
+  /* Fenêtre de dialogue intégrée */
+  #fond{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100}
+  #boite{background:#fff;border-radius:14px;padding:22px;max-width:480px;width:90%;text-align:center;font-size:20px;border:4px solid #ffd23f}
+  @media (max-width:700px){.etagere{grid-template-columns:repeat(3,1fr)}}
+  @media print{
+    body{background:#fff;font-size:12px}
+    header,nav,.noprint,.bandeau,#fond{display:none!important}
+    main{margin:0;padding:0;max-width:none}
+    section{display:none!important}
+    #ecran-bilan{display:block!important}
+    th{background:#ddd!important;color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    th,td{padding:4px}
+  }
+</style>
+</head>
+<body>
+<noscript><div class="bandeau">⚠️ JavaScript est bloqué. Ouvre ce fichier directement avec Firefox, Chrome ou Edge (pas dans un aperçu).</div></noscript>
+<div class="bandeau cache" id="bandeauErreur"></div>
+
+<header>
+  <div class="logo">PIXELS</div>
+  <div>Réserve du magasin</div>
+  <nav id="nav">
+    <button type="button" data-e="mission">1. Mission</button>
+    <button type="button" data-e="reserve">2. Réserve</button>
+    <button type="button" data-e="releve">3. Relevé</button>
+    <button type="button" data-e="commande">4. Commande</button>
+    <button type="button" data-e="bilan" disabled>5. Bilan</button>
+    <button type="button" data-action="nouvelle" style="background:#b33030">🔄 Nouvelle partie</button>
+  </nav>
+</header>
+<main>
+
+<section id="ecran-mission">
+  <h1>🎮 Ta mission</h1>
+  <p>Tu travailles dans la réserve du magasin <b>PIXELS</b>.</p>
+  <p class="gros">50 exemplaires par jeu,<br>sauf Zelda: Echoes of Wisdom : <span class="obj80">80</span> exemplaires.</p>
+  <ol class="etapes">
+    <li>👀 Va dans la <b>réserve</b>. Clique sur chaque case.</li>
+    <li>✏️ Note les quantités sur le <b>relevé</b>.</li>
+    <li>🛒 Remplis le <b>bon de commande</b>.</li>
+    <li>✅ Regarde ton <b>bilan</b>.</li>
+  </ol>
+  <div class="aide">💡 À commander = objectif − stock.<br>Si le stock est déjà assez grand : commander <b>0</b>.</div>
+  <button type="button" class="btn" data-go="reserve">Commencer ▶</button>
+</section>
+
+<section id="ecran-reserve" class="cache">
+  <h1>📦 La réserve</h1>
+  <p>Clique sur une case pour voir la quantité. Cases vues : <b id="nbVus">0</b> / 15</p>
+  <div class="reserve" id="reserve"></div>
+  <div class="detail" id="detail">👆 Clique sur une case.</div>
+  <button type="button" class="btn bleu" data-go="releve">Aller au relevé ▶</button>
+</section>
+
+<section id="ecran-releve" class="cache">
+  <h1>✏️ Relevé de stock</h1>
+  <p>Écris la quantité que tu as vue. Tu peux retourner voir la réserve.</p>
+  <button type="button" class="btn gris" data-go="reserve">◀ Revoir la réserve</button>
+  <div class="alerte" id="alerteReleve"></div>
+  <table><thead><tr><th>Réf.</th><th>Jeu</th><th>Quantité vue</th></tr></thead><tbody id="tbReleve"></tbody></table>
+  <button type="button" class="btn bleu" data-action="versCommande">Aller au bon de commande ▶</button>
+</section>
+
+<section id="ecran-commande" class="cache">
+  <h1>🛒 Bon de commande</h1>
+  <p>Écris combien il faut commander. Si rien à commander, écris <b>0</b>.</p>
+  <div class="aide">À commander = objectif − stock relevé. Jamais en dessous de 0.</div>
+  <button type="button" class="btn gris" data-go="releve">◀ Revoir le relevé</button>
+  <div class="alerte" id="alerteCommande"></div>
+  <table><thead><tr><th>Réf.</th><th>Jeu</th><th>Ton relevé</th><th>Objectif</th><th>À commander</th></tr></thead><tbody id="tbCommande"></tbody></table>
+  <button type="button" class="btn" data-action="valider">✅ Valider la commande</button>
+</section>
+
+<section id="ecran-bilan" class="cache">
+  <h1>📋 Bilan – Réserve PIXELS</h1>
+  <p>Élève : <input type="text" id="nomEleve" style="width:260px;font-size:18px;text-align:left" placeholder="Prénom (facultatif)" aria-label="Prénom de l'élève"> &nbsp; Date : <span id="dateBilan"></span></p>
+  <div class="score" id="score"></div>
+  <table><thead><tr><th>Réf.</th><th>Jeu</th><th>Stock réel</th><th>Relevé</th><th>Objectif</th><th>Commandé</th><th>Attendu</th><th>Relevé ?</th><th>Commande ?</th></tr></thead><tbody id="tbBilan"></tbody></table>
+  <p style="font-size:14px">« Calcul juste, relevé faux » : l'élève a bien calculé à partir de son relevé, mais son relevé était faux.</p>
+  <div class="noprint">
+    <button type="button" class="btn bleu" data-action="imprimer">🖨️ Imprimer le bilan</button>
+    <button type="button" class="btn rouge" data-action="nouvelleDirecte">🔄 Nouvelle partie</button>
+  </div>
+</section>
+
+</main>
+
+<div id="fond" class="cache" role="dialog" aria-modal="true">
+  <div id="boite">
+    <p id="boiteTexte"></p>
+    <button type="button" class="btn" id="boiteOui">Oui</button>
+    <button type="button" class="btn gris" id="boiteNon">Non</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+// Affiche un bandeau si une erreur JavaScript survient (au lieu d'un bouton "muet")
+window.addEventListener("error", function(ev){
+  var b = document.getElementById("bandeauErreur");
+  if(b){ b.textContent = "⚠️ Erreur du jeu : " + (ev.message || "inconnue") + " – Ouvre le fichier avec Firefox, Chrome ou Edge."; b.classList.remove("cache"); }
+});
+
+// ---- Données ----
+const JEUX = Object.freeze([
+  {ref:"MIN",  titre:"Minecraft", c:"#5b8c32"},
+  {ref:"MK8",  titre:"Mario Kart 8 Deluxe", c:"#e03a3a"},
+  {ref:"SMO",  titre:"Super Mario Odyssey", c:"#c22"},
+  {ref:"ACNH", titre:"Animal Crossing: New Horizons", c:"#4fc3a1"},
+  {ref:"PKE",  titre:"Pokémon Écarlate", c:"#e8612c"},
+  {ref:"PKV",  titre:"Pokémon Violet", c:"#7b3fb5"},
+  {ref:"BOTW", titre:"The Legend of Zelda: Breath of the Wild", c:"#2a8fbd"},
+  {ref:"TOTK", titre:"The Legend of Zelda: Tears of the Kingdom", c:"#3b9a57"},
+  {ref:"EOW",  titre:"The Legend of Zelda: Echoes of Wisdom", c:"#d4a017"},
+  {ref:"SSBU", titre:"Super Smash Bros. Ultimate", c:"#333"},
+  {ref:"SPL3", titre:"Splatoon 3", c:"#e6e62e"},
+  {ref:"FC25", titre:"EA Sports FC 25", c:"#1b7f3b"},
+  {ref:"HOG",  titre:"Hogwarts Legacy", c:"#6b4b2a"},
+  {ref:"SON",  titre:"Sonic Frontiers", c:"#1f4fd6"},
+  {ref:"KIR",  titre:"Kirby et le monde oublié", c:"#f48fb1"}
+]);
+const REF_ZELDA_EOW = "EOW";
+const IDX_EOW = JEUX.findIndex(j => j.ref === REF_ZELDA_EOW);
+
+// Règle de stock : 80 pour Zelda Echoes of Wisdom, 50 pour les autres
+function objectif(jeu){ return jeu.ref === REF_ZELDA_EOW ? 80 : 50; }
+// Quantité attendue : différence positive, sinon 0
+function aCommander(obj, stock){ return Math.max(0, obj - stock); }
+
+// ---- État de la partie ----
+let etat = null;
+
+function hasard(min, max){ return Math.floor(Math.random()*(max-min+1)) + min; }
+function melanger(t){ for(let i=t.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1));const x=t[i];t[i]=t[k];t[k]=x;} return t; }
+
+function genererStocks(){
+  const s = new Array(JEUX.length);
+  const autres = melanger(JEUX.map((_,i)=>i).filter(i=>i!==IDX_EOW));
+  s[autres[0]] = 0;                  // un emplacement vide
+  s[autres[1]] = hasard(51, 75);     // au-dessus de 50 : ne pas commander
+  s[autres[2]] = hasard(50, 70);     // à l'objectif ou au-dessus
+  for(let k=3;k<autres.length;k++){
+    s[autres[k]] = Math.random()<0.15 ? 0 : hasard(1, 49); // sous l'objectif
+  }
+  s[IDX_EOW] = hasard(15, 79);       // Zelda EoW toujours sous 80
+  return s;
+}
+function stocksValides(s){
+  const sous = JEUX.filter((j,i)=>s[i] < objectif(j)).length;
+  const auDessus = JEUX.filter((j,i)=>s[i] >= objectif(j)).length;
+  const zero = s.some(v=>v===0);
+  const plus50 = JEUX.some((j,i)=>i!==IDX_EOW && s[i] > 50);
+  return sous >= 3 && auDessus >= 2 && zero && plus50 && s[IDX_EOW] < 80;
+}
+
+// ---- Fenêtre de dialogue intégrée (remplace confirm/alert, souvent bloqués) ----
+let rappelOui = null;
+function demander(texte, siOui, seulementOk){
+  document.getElementById("boiteTexte").textContent = texte;
+  document.getElementById("boiteOui").textContent = seulementOk ? "OK" : "Oui";
+  document.getElementById("boiteNon").classList.toggle("cache", !!seulementOk);
+  rappelOui = siOui || null;
+  document.getElementById("fond").classList.remove("cache");
+  document.getElementById("boiteOui").focus();
+}
+function fermerBoite(){ document.getElementById("fond").classList.add("cache"); }
+
+function nouvellePartie(){
+  let s; do { s = genererStocks(); } while(!stocksValides(s));
+  // Les stocks sont figés : ils ne peuvent plus changer jusqu'à la prochaine partie.
+  etat = { stocks: Object.freeze(s), releve:{}, cmd:{}, vus:{}, termine:false };
+  construireReserve(); construireReleve(); construireCommande();
+  document.getElementById("detail").innerHTML = "👆 Clique sur une case.";
+  document.getElementById("nomEleve").value = "";
+  majNav(false); afficher("mission");
+}
+function demanderNouvelle(){
+  if(etat && !etat.termine && Object.keys(etat.vus).length>0){
+    demander("Commencer une nouvelle partie ? Tes réponses seront effacées.", nouvellePartie);
+  } else nouvellePartie();
+}
+
+// ---- Navigation ----
+const ECRANS = ["mission","reserve","releve","commande","bilan"];
+function afficher(e){
+  ECRANS.forEach(n=>{
+    document.getElementById("ecran-"+n).classList.toggle("cache", n!==e);
+  });
+  document.querySelectorAll("nav button[data-e]").forEach(b=>b.classList.toggle("actif", b.dataset.e===e));
+  if(e==="commande") majRelevesCommande();
+  try { window.scrollTo(0,0); } catch(err) {}
+}
+function majNav(fin){
+  document.querySelectorAll('nav button[data-e]').forEach(b=>{
+    if(b.dataset.e==="bilan") b.disabled = !fin;
+    else if(b.dataset.e!=="mission") b.disabled = fin;
+  });
+}
+
+function echap(t){ return String(t).replace(/[&<>\"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// ---- Réserve ----
+function construireReserve(){
+  const r = document.getElementById("reserve"); r.innerHTML = "";
+  for(let e=0;e<3;e++){
+    const et = document.createElement("div"); et.className="etagere";
+    for(let k=0;k<5;k++){
+      const i = e*5+k, j = JEUX[i];
+      const b = document.createElement("button");
+      b.type="button"; b.className="case"; b.dataset.case = i;
+      b.setAttribute("aria-label","Emplacement "+j.ref+" "+j.titre);
+      b.innerHTML = '<span class="coche">✔</span><div class="porte">?</div><div class="etiq"><b>'+j.ref+'</b>'+echap(j.titre)+'</div>';
+      et.appendChild(b);
+    }
+    r.appendChild(et);
+  }
+  document.getElementById("nbVus").textContent = "0";
+}
+function ouvrirCase(i, bouton){
+  const j = JEUX[i];
+  const q = etat.stocks[i];          // lecture seule du stock figé
+  etat.vus[i] = true;
+  bouton.classList.add("vu");
+  const porte = bouton.querySelector(".porte");
+  porte.textContent = q===0 ? "VIDE" : "📦";
+  porte.style.fontSize = q===0 ? "18px" : "40px";
+  document.getElementById("nbVus").textContent = Object.keys(etat.vus).length;
+  let pile;
+  if(q===0){ pile = '<div class="vide">🚫 Emplacement vide</div>'; }
+  else { pile = ""; for(let n=0;n<q;n++) pile += '<div class="boite" style="background:'+j.c+'"></div>'; }
+  document.getElementById("detail").innerHTML =
+    '<p><span class="ref">'+j.ref+'</span> – <b>'+echap(j.titre)+'</b></p>'+
+    '<div class="pile">'+pile+'</div>'+
+    '<p>Quantité présente : <span class="qte">'+q+'</span> exemplaire'+(q>1?'s':'')+'</p>';
+}
+
+// ---- Vérification des saisies ----
+function lireNombre(v){
+  v = String(v).trim();
+  if(v==="") return {err:"Case vide. Écris un nombre."};
+  if(v.includes("-")) return {err:"Pas de nombre négatif."};
+  if(/[.,]/.test(v)) return {err:"Pas de virgule. Nombre entier."};
+  if(!/^\d+$/.test(v)) return {err:"Écris seulement des chiffres."};
+  const n = parseInt(v,10);
+  if(n>999) return {err:"Nombre trop grand."};
+  return {val:n};
+}
+function verifierTable(tb, cle, alerteId){
+  let erreurs = 0, premier = null;
+  tb.querySelectorAll("input").forEach(inp=>{
+    const r = lireNombre(inp.value);
+    const m = inp.parentNode.querySelector(".msg");
+    if(r.err){ erreurs++; inp.classList.add("err"); m.textContent = r.err; if(!premier) premier=inp; }
+    else { inp.classList.remove("err"); m.textContent=""; etat[cle][inp.dataset.i] = r.val; }
+  });
+  const a = document.getElementById(alerteId);
+  if(erreurs){ a.style.display="block"; a.textContent = "⚠️ "+erreurs+" case(s) à corriger."; if(premier) premier.focus(); }
+  else a.style.display="none";
+  return erreurs===0;
+}
+
+// ---- Relevé ----
+function construireReleve(){
+  const tb = document.getElementById("tbReleve"); tb.innerHTML="";
+  JEUX.forEach((j,i)=>{
+    tb.insertAdjacentHTML("beforeend",
+      '<tr><td class="ref">'+j.ref+'</td><td>'+echap(j.titre)+'</td>'+
+      '<td><input type="text" inputmode="numeric" autocomplete="off" data-i="'+i+'" aria-label="Quantité vue '+j.ref+'"><span class="msg"></span></td></tr>');
+  });
+  document.getElementById("alerteReleve").style.display="none";
+}
+function versCommande(){
+  if(verifierTable(document.getElementById("tbReleve"),"releve","alerteReleve")) afficher("commande");
+}
+
+// ---- Commande ----
+function construireCommande(){
+  const tb = document.getElementById("tbCommande"); tb.innerHTML="";
+  JEUX.forEach((j,i)=>{
+    const o = objectif(j);
+    tb.insertAdjacentHTML("beforeend",
+      '<tr><td class="ref">'+j.ref+'</td><td>'+echap(j.titre)+'</td>'+
+      '<td class="rel" data-i="'+i+'">–</td>'+
+      '<td><span class="obj '+(o===80?'obj80':'')+'">'+o+'</span></td>'+
+      '<td><input type="text" inputmode="numeric" autocomplete="off" data-i="'+i+'" aria-label="Quantité à commander '+j.ref+'"><span class="msg"></span></td></tr>');
+  });
+  document.getElementById("alerteCommande").style.display="none";
+}
+function majRelevesCommande(){
+  // Affiche le relevé saisi par l'élève (pas le stock réel)
+  document.querySelectorAll("#tbCommande .rel").forEach(td=>{
+    const v = etat.releve[td.dataset.i];
+    td.textContent = (v===undefined) ? "–" : v;
+  });
+}
+function valider(){
+  const okR = verifierTable(document.getElementById("tbReleve"),"releve","alerteReleve");
+  if(!okR){ demander("Ton relevé n'est pas complet. Corrige-le d'abord.", ()=>afficher("releve"), true); return; }
+  if(!verifierTable(document.getElementById("tbCommande"),"cmd","alerteCommande")) return;
+  demander("Valider ? Après, tu ne pourras plus changer tes réponses.", ()=>{
+    etat.termine = true; construireBilan(); majNav(true); afficher("bilan");
+  });
+}
+
+// ---- Bilan ----
+function construireBilan(){
+  const tb = document.getElementById("tbBilan"); tb.innerHTML="";
+  let okRel=0, okCmd=0, calculJuste=0;
+  JEUX.forEach((j,i)=>{
+    const reel = etat.stocks[i], rel = etat.releve[i], cmd = etat.cmd[i];
+    const o = objectif(j);                 // 80 pour EOW, 50 sinon
+    const attendu = aCommander(o, reel);
+    const relOk = rel===reel, cmdOk = cmd===attendu;
+    if(relOk) okRel++;
+    if(cmdOk) okCmd++;
+    let txtCmd;
+    if(cmdOk) txtCmd = '<span class="ok">✔ Juste</span>';
+    else if(!relOk && cmd===aCommander(o, rel)){ txtCmd = '<span class="ko">✘ Calcul juste, relevé faux</span>'; calculJuste++; }
+    else txtCmd = '<span class="ko">✘ Erreur de calcul</span>';
+    tb.insertAdjacentHTML("beforeend",
+      '<tr><td class="ref">'+j.ref+'</td><td>'+echap(j.titre)+'</td><td>'+reel+'</td><td>'+rel+'</td>'+
+      '<td><b>'+o+'</b></td><td>'+cmd+'</td><td><b>'+attendu+'</b></td>'+
+      '<td>'+(relOk?'<span class="ok">✔ Juste</span>':'<span class="ko">✘ Erreur de relevé</span>')+'</td>'+
+      '<td>'+txtCmd+'</td></tr>');
+  });
+  document.getElementById("score").innerHTML =
+    '<div>✏️ Relevé<br><b>'+okRel+' / 15</b> justes</div>'+
+    '<div>🛒 Commande<br><b>'+okCmd+' / 15</b> justes</div>'+
+    '<div>🔍 Calcul juste, relevé faux<br><b>'+calculJuste+'</b></div>';
+  document.getElementById("dateBilan").textContent = new Date().toLocaleDateString("fr-FR");
+}
+
+// ---- Un seul gestionnaire de clics pour toute la page ----
+document.addEventListener("click", function(ev){
+  const cible = ev.target.closest("button");
+  if(!cible || cible.disabled) return;
+
+  if(cible.id==="boiteOui"){ const f = rappelOui; rappelOui = null; fermerBoite(); if(f) f(); return; }
+  if(cible.id==="boiteNon"){ rappelOui = null; fermerBoite(); return; }
+
+  if(cible.dataset.go){ afficher(cible.dataset.go); return; }
+  if(cible.dataset.e){ afficher(cible.dataset.e); return; }
+  if(cible.dataset.case!==undefined){ ouvrirCase(parseInt(cible.dataset.case,10), cible); return; }
+
+  switch(cible.dataset.action){
+    case "nouvelle": demanderNouvelle(); break;
+    case "nouvelleDirecte": nouvellePartie(); break;
+    case "versCommande": versCommande(); break;
+    case "valider": valider(); break;
+    case "imprimer": window.print(); break;
+  }
+});
+
+// ---- Démarrage ----
+nouvellePartie();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"8607d2a720d14b038279025b2b5a82e5","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
